@@ -13,10 +13,14 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 
+import fr.hyper.midi.MidiData;
+
 public class MidiHandler {
 	private final Sequencer sequencer;
 
 	private Sequence seq;
+
+	private MidiData data;
 
 	public MidiHandler() throws MidiUnavailableException {
 		sequencer = MidiSystem.getSequencer();
@@ -86,6 +90,14 @@ public class MidiHandler {
 
 	public long getTickPosition() {
 		return sequencer.getTickPosition();
+	}
+
+	public MidiData getMidiData() {
+		return data;
+	}
+
+	public void loadMidiData() {
+		this.data = new MidiData(this);
 	}
 
 	public final File chooseMidi() {

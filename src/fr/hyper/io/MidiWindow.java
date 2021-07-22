@@ -20,6 +20,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -30,7 +31,8 @@ public class MidiWindow {
 
 	private JLabel noFile = new JLabel("No file chosen !", SwingConstants.CENTER);
 
-	private NotesPanel panel = null;
+	private NotesPanel2 notesPanel = null;
+	private JScrollPane scrollPane = null;
 	private JPanel controlPanel = new JPanel();
 
 	private JButton stop, play;
@@ -53,8 +55,10 @@ public class MidiWindow {
 		zoomListener = new ZoomListener();
 		frame.addMouseWheelListener(zoomListener);
 
-		this.panel = new NotesPanel(this);
-		panel.add(noFile);
+		scrollPane = new JScrollPane(notesPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+		this.notesPanel = new NotesPanel2(this);
+		scrollPane.add(notesPanel);
+		notesPanel.add(noFile);
 
 		stop = new JButton("⏹");
 		play = new JButton("▶");
@@ -68,13 +72,14 @@ public class MidiWindow {
 
 		frame.setMinimumSize(new Dimension(500, 500));
 		frame.setLayout(new BorderLayout());
-		frame.add(panel, BorderLayout.CENTER);
+		frame.add(notesPanel, BorderLayout.CENTER);
 		frame.add(controlPanel, BorderLayout.SOUTH);
 
 		try {
 			handler = new MidiHandler();
 		} catch (MidiUnavailableException e) {
 			e.printStackTrace();
+			System.exit(1);
 		}
 
 		initJMenuBar();
@@ -111,7 +116,7 @@ public class MidiWindow {
 	}
 
 	public void update() {
-		this.panel.repaint();
+		this.notesPanel.repaint();
 	}
 
 	private class MidiActionListener implements ActionListener {
@@ -127,6 +132,7 @@ public class MidiWindow {
 						handler.read(f);
 						handler.play();//Why tf do I have to do that to get song info
 						if(play.isEnabled()) handler.stop();
+						handler.loadMidiData();
 						System.out.println(handler.getBPM());
 						System.out.println(handler.getTempoFactor());
 					}
@@ -152,7 +158,9 @@ public class MidiWindow {
 		@Override
 		public void mouseWheelMoved(MouseWheelEvent e) {
 			if(e.isAltDown())
-				panel.zoom(e.getPreciseWheelRotation());
+				notesPanel.zoom(e.getPreciseWheelRotation());
+			else
+				notesPanel.move(e.getPreciseWheelRotation());
 		}
 	}
 }

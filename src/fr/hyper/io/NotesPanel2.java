@@ -2,15 +2,17 @@ package fr.hyper.io;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.util.List;
 
-import javax.sound.midi.MidiEvent;
-import javax.sound.midi.ShortMessage;
-import javax.sound.midi.Track;
-import javax.swing.JPanel;
+import javax.swing.JComponent;
 
-public class NotesPanel2 extends JPanel {
+import fr.hyper.midi.MidiData;
+import fr.hyper.midi.MidiNote;
+
+public class NotesPanel2 extends JComponent {
 	private static final long serialVersionUID = -428498749840766201L;
 
 	public static final int COL_WIDTH = 50, MIDI_NOTES = 128;
@@ -23,38 +25,41 @@ public class NotesPanel2 extends JPanel {
 	private MidiWindow parent;
 
 	private double beatsShown = 10;
+	private int xPos = 0;
 
 	public NotesPanel2(MidiWindow parent) {
 		this.parent = parent;
+		this.setMinimumSize(new Dimension(COL_WIDTH*MIDI_NOTES+1, 360));
+		this.setPreferredSize(new Dimension(COL_WIDTH*MIDI_NOTES+1, 360));
+		this.setSize(new Dimension(COL_WIDTH*MIDI_NOTES+1, 360));
+		this.setBounds(0, 0, COL_WIDTH*MIDI_NOTES+1, 360);
 	}
 
 	@Override
 	public void paint(Graphics g) {
-		if(!parent.getMidiHandler().isOpen()) {
+		MidiHandler midi = parent.getMidiHandler();
+		MidiData data = midi.getMidiData();
+		if(!midi.isOpen() || data == null) {
 			super.paint(g);
 			return;
 		}
 		int w = this.getWidth()-1, h = this.getHeight();
+		List<List<MidiNote>> tracks = data.getTracks();
 
 		Graphics2D g2 = (Graphics2D) g;
-		MidiHandler midi = parent.getMidiHandler();
 		g2.setBackground(Color.BLACK);
 		g2.clearRect(0, 0, w, h);
 		g2.setColor(Color.WHITE);
 		g2.setStroke(new BasicStroke());
-		Track[] tracks = midi.getTracks();
-		for(int i = 0; i < tracks.length; i++) {
-			int x = (int) ((double)(i*w)/tracks.length);
-			g2.drawLine(x, 0, x, h);
+		for(int i = 0; i < MIDI_NOTES; i++) {
+			int x = i*COL_WIDTH;
+			g2.drawLine(x-xPos, 0, x-xPos, h);
 		}
-		g2.drawLine(w, 0, w, h);
+		g2.drawLine(COL_WIDTH*MIDI_NOTES-xPos, 0, COL_WIDTH*MIDI_NOTES-xPos, h);
 		long beatLength = (long) (60000000.0/midi.getBPM()),
 				prevBeat = midi.getPosition()-(midi.getPosition()%(beatLength)),
 				start = midi.getPosition()-150000,
 				end = (long) (midi.getPosition()+beatLength*beatsShown);
-
-		double ticksPerSecond = midi.getResolution() * (midi.getBPM() / 60.0);
-		long tickSize = (long) (1000000.0 / ticksPerSecond);
 
 		for(int i = 0; i <= beatsShown+1; i++) {
 			long t = prevBeat+beatLength*i;
@@ -62,47 +67,27 @@ public class NotesPanel2 extends JPanel {
 			g2.drawLine(0, y, w, y);
 		}
 
-		for(int i = 0; i < tracks.length; i++) {
-			Color c = Color.getHSBColor((float)(i)/tracks.length, 1, 1);
-			Track track = tracks[i];
-			int x1 = (int) ((double)(i*w)/tracks.length)+1,
-					x2 = (int) ((double)((i+1)*w)/tracks.length)-1;
-			int tW = x2-x1+1;
-			boolean started = false;
+		for(int i = 0; i < tracks.size(); i++) {
+			Color c = Color.getHSBColor((float) (i)/tracks.size(), 1, 1);
+			List<MidiNote> track = tracks.get(i);
 			for(int j = 0; j < track.size(); j++) {
-				MidiEvent event = track.get(j);
-				if(!(event.getMessage() instanceof ShortMessage)) continue;
-				int command = ((ShortMessage)(event.getMessage())).getCommand();
+				MidiNote event = track.get(j);
+				int x1 = (event.getNote()+event.getOctave()*12)*COL_WIDTH+1,
+						x2 = (event.getNote()+event.getOctave()*12+1)*COL_WIDTH-1;
 				g2.setColor(c);
-				if(!started && command == NOTE_OFF) {
-					long t = tickSize*event.getTick();
-					if(t < start) continue;//Before the screen starts
-					if(t > end) break;//We're done drawing
-					int y = getHeightPos(t, start, end, h);
-					g2.fillRect(x1, y, tW, h-y);
-				}
-				if(command != NOTE_ON) continue;
-				long t = tickSize*event.getTick();
-				if(t < start) continue;//Before the screen starts
-				started = true;
-				if(t > end) break;//We're done drawing
+				long t = event.getPosition();
 				int y = getHeightPos(t, start, end, h);
-				int i2 = 0;
-				MidiEvent e = event;
-				ShortMessage message = null;
-				do {
-					e = track.get(j+(i2++));
-					message = (e.getMessage() instanceof ShortMessage)?(ShortMessage)e.getMessage():null;
-				} while((message == null
-						|| message.getCommand() != NOTE_OFF)
-						&& (j+i2) < track.size());
-				long t2 = tickSize*e.getTick();
-				int y2 = getHeightPos(t2, start, end, h);
-				g2.fillRect(x1, y2, tW, y-y2);
-				g2.setColor(Color.WHITE);
-				g2.setStroke(new BasicStroke(5));
-				g2.drawLine(x1, y, x2, y);
-				g2.setStroke(new BasicStroke());
+				int y2 = getHeightPos(t+event.getLength(), start, end, h);
+				boolean drawStart = t >= start;
+				if(!drawStart) y = h;
+				if(y2 < 0) y2 = 0;
+				g2.fillRect(x1-xPos, y2, COL_WIDTH, y-y2);
+				if(drawStart) {
+					g2.setColor(Color.WHITE);
+					g2.setStroke(new BasicStroke(5));
+					g2.drawLine(x1-xPos, y, x2-xPos, y);
+					g2.setStroke(new BasicStroke());
+				}
 			}
 		}
 	}
@@ -113,6 +98,10 @@ public class NotesPanel2 extends JPanel {
 
 	public void zoom(double amount) {
 		this.beatsShown *= 1+amount/10.0;
+	}
+
+	public void move(double amount) {
+		xPos += amount*25;
 	}
 
 	@Override
