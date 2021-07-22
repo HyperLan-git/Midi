@@ -17,7 +17,8 @@ public class NotesPanel2 extends JPanel {
 
 	public static final int NOTE_ON = 0x90;
 	public static final int NOTE_OFF = 0x80;
-	public static final String[] NOTE_NAMES = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+	public static final String[] NOTE_NAMES = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"},
+			EU_NOTE_NAMES = {"do", "do#", "ré", "ré#", "mi", "fa", "fa#", "sol", "sol#", "la", "la#", "si"};
 
 	private MidiWindow parent;
 
