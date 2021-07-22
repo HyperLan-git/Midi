@@ -10,7 +10,7 @@ import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 import javax.swing.JPanel;
 
-public class NotesPanel extends JPanel {
+public class NotesPanel2 extends JPanel {
 	private static final long serialVersionUID = -428498749840766201L;
 
 	public static final int COL_WIDTH = 50, MIDI_NOTES = 128;
@@ -23,7 +23,7 @@ public class NotesPanel extends JPanel {
 
 	private double beatsShown = 10;
 
-	public NotesPanel(MidiWindow parent) {
+	public NotesPanel2(MidiWindow parent) {
 		this.parent = parent;
 	}
 

@@ -151,7 +151,6 @@ public class MidiWindow {
 	private class ZoomListener implements MouseWheelListener {
 		@Override
 		public void mouseWheelMoved(MouseWheelEvent e) {
-			System.out.println(e.getWheelRotation());
 			if(e.isAltDown())
 				panel.zoom(e.getPreciseWheelRotation());
 		}
