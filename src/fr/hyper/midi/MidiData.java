@@ -31,14 +31,13 @@ public class MidiData {
 				long pos = tickSize*e.getTick();
 				//TODO possible refactoring
 				if(message.getCommand() == NOTE_ON) {
-					System.out.println(message.getMessage()[1]);
 					for(int k = currentNotes.size()-1; k >= 0; k--) {
 						MidiEvent event = currentNotes.get(k);
 						MidiMessage msg = event.getMessage();
 						if(event.getTick() != e.getTick()) {
 							currentNotes.remove(k);
 							notes.add(new MidiNote(event.getTick()*tickSize, pos-event.getTick()*tickSize,
-									msg.getMessage()[1], msg.getMessage()[1]));
+									msg.getMessage()[1], msg.getMessage()[2]));
 						}
 					}
 					currentNotes.add(e);
@@ -50,7 +49,7 @@ public class MidiData {
 						if(msg.getMessage()[1] == message.getMessage()[1]) {
 							currentNotes.remove(k);
 							notes.add(new MidiNote(event.getTick()*tickSize, pos-event.getTick()*tickSize,
-									msg.getMessage()[1], msg.getMessage()[1]));
+									msg.getMessage()[1], msg.getMessage()[2]));
 						}
 					}
 				}
@@ -59,7 +58,7 @@ public class MidiData {
 				MidiEvent event = currentNotes.get(k);
 				MidiMessage msg = event.getMessage();
 				notes.add(new MidiNote(event.getTick()*tickSize, t.ticks()*tickSize-event.getTick()*tickSize,
-						msg.getMessage()[1], msg.getMessage()[1]));
+						msg.getMessage()[1], msg.getMessage()[2]));
 			}
 			tracks.add(notes);
 		}
