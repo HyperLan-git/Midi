@@ -5,6 +5,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.io.File;
 import java.io.IOException;
 
@@ -35,7 +37,8 @@ public class MidiWindow {
 
 	private JMenuItem load, quit;
 
-	private MidiActionListener listener;
+	private MidiActionListener actionListener;
+	private ZoomListener zoomListener;
 
 	public MidiWindow() {
 		try {
@@ -46,15 +49,17 @@ public class MidiWindow {
 		}
 		System.setProperty("sun.awt.noerasebackground", "true");
 
-		listener = new MidiActionListener();
+		actionListener = new MidiActionListener();
+		zoomListener = new ZoomListener();
+		frame.addMouseWheelListener(zoomListener);
 
 		this.panel = new NotesPanel(this);
 		panel.add(noFile);
 
 		stop = new JButton("⏹");
 		play = new JButton("▶");
-		stop.addActionListener(listener);
-		play.addActionListener(listener);
+		stop.addActionListener(actionListener);
+		play.addActionListener(actionListener);
 		stop.setFont(new Font("u2400", 0, 30));
 		play.setFont(new Font("u2400", 0, 30));
 		stop.setEnabled(false);
@@ -86,8 +91,8 @@ public class MidiWindow {
 		quit.setMnemonic('Q');
 		frame.setJMenuBar(bar);
 
-		load.addActionListener(listener);
-		quit.addActionListener(listener);
+		load.addActionListener(actionListener);
+		quit.addActionListener(actionListener);
 
 		file.add(load);
 
@@ -99,6 +104,14 @@ public class MidiWindow {
 
 	public MidiHandler getMidiHandler() {
 		return handler;
+	}
+
+	public JFrame getFrame() {
+		return frame;
+	}
+
+	public void update() {
+		this.panel.repaint();
 	}
 
 	private class MidiActionListener implements ActionListener {
@@ -125,19 +138,22 @@ public class MidiWindow {
 				handler.play();
 				play.setEnabled(false);
 				stop.setEnabled(true);
+				stop.grabFocus();
 			} else if(o.equals(stop)) {
 				handler.stop();
 				play.setEnabled(true);
 				stop.setEnabled(false);
+				play.grabFocus();
 			}
 		}
 	}
 
-	public JFrame getFrame() {
-		return frame;
-	}
-
-	public void update() {
-		this.panel.repaint();
+	private class ZoomListener implements MouseWheelListener {
+		@Override
+		public void mouseWheelMoved(MouseWheelEvent e) {
+			System.out.println(e.getWheelRotation());
+			if(e.isAltDown())
+				panel.zoom(e.getPreciseWheelRotation());
+		}
 	}
 }
