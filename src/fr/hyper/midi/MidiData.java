@@ -40,7 +40,8 @@ public class MidiData {
 									msg.getMessage()[1], msg.getMessage()[2]));
 						}
 					}
-					currentNotes.add(e);
+					if(e.getMessage().getMessage()[2] != 0)
+						currentNotes.add(e);
 				}
 				if(message.getCommand() == NOTE_OFF) {
 					for(int k = currentNotes.size()-1; k >= 0; k--) {
@@ -63,7 +64,7 @@ public class MidiData {
 			tracks.add(notes);
 		}
 	}
-	
+
 	public List<List<MidiNote>> getTracks() {
 		return tracks;
 	}

@@ -99,6 +99,10 @@ public class MidiHandler {
 	public void loadMidiData() {
 		this.data = new MidiData(this);
 	}
+	
+	public void setBPM(float bpm) {
+		sequencer.setTempoInBPM(bpm);
+	}
 
 	public final File chooseMidi() {
 		JFileChooser chooser = new JFileChooser();

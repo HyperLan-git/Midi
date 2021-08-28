@@ -35,9 +35,11 @@ public class MidiWindow {
 	private JScrollPane scrollPane = null;
 	private JPanel controlPanel = new JPanel();
 
+	private PlayConfig config;
+
 	private JButton stop, play;
 
-	private JMenuItem load, quit;
+	private JMenuItem load, options, quit;
 
 	private MidiActionListener actionListener;
 	private ZoomListener zoomListener;
@@ -59,6 +61,8 @@ public class MidiWindow {
 		this.notesPanel = new NotesPanel2(this);
 		scrollPane.add(notesPanel);
 		notesPanel.add(noFile);
+
+		config = new PlayConfig();
 
 		stop = new JButton("⏹");
 		play = new JButton("▶");
@@ -89,19 +93,23 @@ public class MidiWindow {
 	private void initJMenuBar() {
 		JMenuBar bar = new JMenuBar();
 		JMenu file = new JMenu("File");
+		options = new JMenuItem("Options");
 		quit = new JMenuItem("Quit");
 
 		load = new JMenuItem("Load file");
 		file.setMnemonic('F');
 		quit.setMnemonic('Q');
+		options.setMnemonic('O');
 		frame.setJMenuBar(bar);
 
 		load.addActionListener(actionListener);
+		options.addActionListener(actionListener);
 		quit.addActionListener(actionListener);
 
 		file.add(load);
 
 		bar.add(file);
+		bar.add(options);
 		bar.add(quit);
 
 		frame.setJMenuBar(bar);
@@ -125,6 +133,8 @@ public class MidiWindow {
 			Object o = e.getSource();
 			if(o.equals(quit)) {
 				frame.dispose();
+			} else if(o.equals(options) && handler != null) {
+				config.setVisible(true);
 			} else if(o.equals(load)) {
 				try {
 					File f = handler.chooseMidi();
@@ -132,6 +142,7 @@ public class MidiWindow {
 						handler.read(f);
 						handler.play();//Why tf do I have to do that to get song info
 						if(play.isEnabled()) handler.stop();
+						config.setHandler(handler);
 						handler.loadMidiData();
 						System.out.println(handler.getBPM());
 						System.out.println(handler.getTempoFactor());
@@ -140,12 +151,12 @@ public class MidiWindow {
 					e1.printStackTrace();
 					JOptionPane.showMessageDialog(frame, "Could not load midi file !", "Error", JOptionPane.ERROR_MESSAGE);
 				}
-			} else if(o.equals(play)) {
+			} else if(o.equals(play) && handler != null) {
 				handler.play();
 				play.setEnabled(false);
 				stop.setEnabled(true);
 				stop.grabFocus();
-			} else if(o.equals(stop)) {
+			} else if(o.equals(stop) && handler != null) {
 				handler.stop();
 				play.setEnabled(true);
 				stop.setEnabled(false);

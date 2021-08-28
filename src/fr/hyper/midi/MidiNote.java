@@ -3,6 +3,13 @@ package fr.hyper.midi;
 import java.util.Comparator;
 
 public class MidiNote {
+	/**
+	 * Contains all the notes in order, they correspond to the bytes in note on events, middle C is 60=0x36
+	 */
+	public static final String[] NOTES = new String[] {
+		"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
+	};
+	
 	private long position, length;
 
 	private short note, octave, strength;

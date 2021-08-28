@@ -81,7 +81,7 @@ public class NotesPanel2 extends JComponent {
 				boolean drawStart = t >= start;
 				if(!drawStart) y = h;
 				if(y2 < 0) y2 = 0;
-				g2.fillRect(x1-xPos, y2, COL_WIDTH, y-y2);
+				g2.fillRect(x1-xPos, y2, COL_WIDTH-1, y-y2);
 				if(drawStart) {
 					g2.setColor(Color.WHITE);
 					g2.setStroke(new BasicStroke(5));
@@ -89,6 +89,14 @@ public class NotesPanel2 extends JComponent {
 					g2.setStroke(new BasicStroke());
 				}
 			}
+		}
+
+		g2.setColor(Color.WHITE);
+		for(int i = 0; i < MIDI_NOTES; i++) {
+			int x = i*COL_WIDTH;
+			String str = EU_NOTE_NAMES[i%NOTE_NAMES.length];
+			g2.drawString(str,
+					(int) (x-xPos+COL_WIDTH/2-g2.getFont().getStringBounds(str, g2.getFontRenderContext()).getWidth()/2), h-30);
 		}
 	}
 
