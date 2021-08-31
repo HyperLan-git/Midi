@@ -15,7 +15,7 @@ import fr.hyper.midi.MidiNote;
 public class NotesPanel2 extends JComponent {
 	private static final long serialVersionUID = -428498749840766201L;
 
-	public static final int COL_WIDTH = 50, MIDI_NOTES = 128;
+	public static final int MIDI_NOTES = 128;
 
 	public static final int NOTE_ON = 0x90;
 	public static final int NOTE_OFF = 0x80;
@@ -26,13 +26,14 @@ public class NotesPanel2 extends JComponent {
 
 	private double beatsShown = 10;
 	private int xPos = 0;
+	private int colWidth = 50;
 
 	public NotesPanel2(MidiWindow parent) {
 		this.parent = parent;
-		this.setMinimumSize(new Dimension(COL_WIDTH*MIDI_NOTES+1, 360));
-		this.setPreferredSize(new Dimension(COL_WIDTH*MIDI_NOTES+1, 360));
-		this.setSize(new Dimension(COL_WIDTH*MIDI_NOTES+1, 360));
-		this.setBounds(0, 0, COL_WIDTH*MIDI_NOTES+1, 360);
+		this.setMinimumSize(new Dimension(colWidth*MIDI_NOTES+1, 360));
+		this.setPreferredSize(new Dimension(colWidth*MIDI_NOTES+1, 360));
+		this.setSize(new Dimension(colWidth*MIDI_NOTES+1, 360));
+		this.setBounds(0, 0, colWidth*MIDI_NOTES+1, 360);
 	}
 
 	@Override
@@ -52,10 +53,10 @@ public class NotesPanel2 extends JComponent {
 		g2.setColor(Color.WHITE);
 		g2.setStroke(new BasicStroke());
 		for(int i = 0; i < MIDI_NOTES; i++) {
-			int x = i*COL_WIDTH;
+			int x = i*colWidth;
 			g2.drawLine(x-xPos, 0, x-xPos, h);
 		}
-		g2.drawLine(COL_WIDTH*MIDI_NOTES-xPos, 0, COL_WIDTH*MIDI_NOTES-xPos, h);
+		g2.drawLine(colWidth*MIDI_NOTES-xPos, 0, colWidth*MIDI_NOTES-xPos, h);
 		long beatLength = (long) (60000000.0/midi.getBPM()),
 				prevBeat = midi.getPosition()-(midi.getPosition()%(beatLength)),
 				start = midi.getPosition()-150000,
@@ -72,8 +73,8 @@ public class NotesPanel2 extends JComponent {
 			List<MidiNote> track = tracks.get(i);
 			for(int j = 0; j < track.size(); j++) {
 				MidiNote event = track.get(j);
-				int x1 = (event.getNote()+event.getOctave()*12)*COL_WIDTH+1,
-						x2 = (event.getNote()+event.getOctave()*12+1)*COL_WIDTH-1;
+				int x1 = (event.getNote()+event.getOctave()*12)*colWidth+1,
+						x2 = (event.getNote()+event.getOctave()*12+1)*colWidth-1;
 				g2.setColor(c);
 				long t = event.getPosition();
 				int y = getHeightPos(t, start, end, h);
@@ -81,7 +82,7 @@ public class NotesPanel2 extends JComponent {
 				boolean drawStart = t >= start;
 				if(!drawStart) y = h;
 				if(y2 < 0) y2 = 0;
-				g2.fillRect(x1-xPos, y2, COL_WIDTH-1, y-y2);
+				g2.fillRect(x1-xPos, y2, colWidth-1, y-y2);
 				if(drawStart) {
 					g2.setColor(Color.WHITE);
 					g2.setStroke(new BasicStroke(5));
@@ -93,11 +94,14 @@ public class NotesPanel2 extends JComponent {
 
 		g2.setColor(Color.WHITE);
 		for(int i = 0; i < MIDI_NOTES; i++) {
-			int x = i*COL_WIDTH;
+			int x = i*colWidth;
 			String str = EU_NOTE_NAMES[i%NOTE_NAMES.length];
 			g2.drawString(str,
-					(int) (x-xPos+COL_WIDTH/2-g2.getFont().getStringBounds(str, g2.getFontRenderContext()).getWidth()/2), h-30);
+					(int) (x-xPos+colWidth/2-g2.getFont().getStringBounds(str, g2.getFontRenderContext()).getWidth()/2), h-30);
 		}
+		g2.setColor(Color.GREEN);
+		int y1 = getHeightPos(midi.getPosition(), start, end, h);
+		g2.drawLine(0, y1, w, y1);
 	}
 
 	public static final int getHeightPos(long position, long screenStart, long screenEnd, int height) {
@@ -106,6 +110,12 @@ public class NotesPanel2 extends JComponent {
 
 	public void zoom(double amount) {
 		this.beatsShown *= 1+amount/10.0;
+	}
+	
+	public void zoomHorizontally(double amount) {
+		int temp = colWidth;
+		this.colWidth *= 1+amount/10.0;
+		if(colWidth <= 10) colWidth = temp;
 	}
 
 	public void move(double amount) {

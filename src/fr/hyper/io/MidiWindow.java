@@ -21,9 +21,12 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSlider;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 public class MidiWindow {
 	private JFrame frame = new JFrame();
@@ -39,9 +42,11 @@ public class MidiWindow {
 
 	private JButton stop, play;
 
+	private JSlider advancement;
+
 	private JMenuItem load, options, quit;
 
-	private MidiActionListener actionListener;
+	private MidiListener listener;
 	private ZoomListener zoomListener;
 
 	public MidiWindow() {
@@ -53,12 +58,12 @@ public class MidiWindow {
 		}
 		System.setProperty("sun.awt.noerasebackground", "true");
 
-		actionListener = new MidiActionListener();
+		listener = new MidiListener();
 		zoomListener = new ZoomListener();
 		frame.addMouseWheelListener(zoomListener);
 
 		scrollPane = new JScrollPane(notesPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-		this.notesPanel = new NotesPanel2(this);
+		notesPanel = new NotesPanel2(this);
 		scrollPane.add(notesPanel);
 		notesPanel.add(noFile);
 
@@ -66,13 +71,19 @@ public class MidiWindow {
 
 		stop = new JButton("⏹");
 		play = new JButton("▶");
-		stop.addActionListener(actionListener);
-		play.addActionListener(actionListener);
+		advancement = new JSlider();
+		advancement.setEnabled(false);
+		advancement.setMinimumSize(new Dimension(300, 50));
+		advancement.setPreferredSize(new Dimension(300, 50));
+		stop.addActionListener(listener);
+		play.addActionListener(listener);
+		advancement.addChangeListener(listener);
 		stop.setFont(new Font("u2400", 0, 30));
 		play.setFont(new Font("u2400", 0, 30));
 		stop.setEnabled(false);
 		controlPanel.add(stop);
 		controlPanel.add(play);
+		controlPanel.add(advancement);
 
 		frame.setMinimumSize(new Dimension(500, 500));
 		frame.setLayout(new BorderLayout());
@@ -102,9 +113,9 @@ public class MidiWindow {
 		options.setMnemonic('O');
 		frame.setJMenuBar(bar);
 
-		load.addActionListener(actionListener);
-		options.addActionListener(actionListener);
-		quit.addActionListener(actionListener);
+		load.addActionListener(listener);
+		options.addActionListener(listener);
+		quit.addActionListener(listener);
 
 		file.add(load);
 
@@ -125,9 +136,28 @@ public class MidiWindow {
 
 	public void update() {
 		this.notesPanel.repaint();
+		if(!advancement.isEnabled())
+			advancement.getModel().setValue((int) handler.getTickPosition());
+		if(handler.getTickPosition() == handler.getTickLength()) {
+			advancement.setEnabled(true);
+			play.setEnabled(true);
+			stop.setEnabled(false);
+			play.grabFocus();
+		}
 	}
 
-	private class MidiActionListener implements ActionListener {
+	private class MidiListener implements ActionListener, ChangeListener {
+		@Override
+		public void stateChanged(ChangeEvent e) {
+			Object o = e.getSource();
+			if(o.equals(advancement)) {
+				if(advancement.isEnabled()) {
+					handler.setTickPosition(advancement.getValue());
+					config.read();
+				}
+			}
+		}
+
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			Object o = e.getSource();
@@ -141,23 +171,30 @@ public class MidiWindow {
 					if(f != null) {
 						handler.read(f);
 						handler.play();//Why tf do I have to do that to get song info
-						if(play.isEnabled()) handler.stop();
+						advancement.setEnabled(true);
+						if(play.isEnabled()) {
+							handler.stop();
+							advancement.setEnabled(false);
+						}
 						config.setHandler(handler);
 						handler.loadMidiData();
-						System.out.println(handler.getBPM());
-						System.out.println(handler.getTempoFactor());
+						advancement.setMinimum(0);
+						advancement.setMaximum((int) handler.getTickLength());
 					}
 				} catch (InvalidMidiDataException | IOException | MidiUnavailableException e1) {
 					e1.printStackTrace();
 					JOptionPane.showMessageDialog(frame, "Could not load midi file !", "Error", JOptionPane.ERROR_MESSAGE);
 				}
 			} else if(o.equals(play) && handler != null) {
+				config.read();
 				handler.play();
+				advancement.setEnabled(false);
 				play.setEnabled(false);
 				stop.setEnabled(true);
 				stop.grabFocus();
 			} else if(o.equals(stop) && handler != null) {
 				handler.stop();
+				advancement.setEnabled(true);
 				play.setEnabled(true);
 				stop.setEnabled(false);
 				play.grabFocus();
@@ -170,6 +207,8 @@ public class MidiWindow {
 		public void mouseWheelMoved(MouseWheelEvent e) {
 			if(e.isAltDown())
 				notesPanel.zoom(e.getPreciseWheelRotation());
+			else if(e.isControlDown())
+				notesPanel.zoomHorizontally(e.getPreciseWheelRotation());
 			else
 				notesPanel.move(e.getPreciseWheelRotation());
 		}

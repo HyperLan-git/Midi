@@ -36,12 +36,12 @@ public class PlayConfig extends JDialog implements ActionListener {
 		this.handler = handler;
 	}
 
-	private void write() {
+	public void write() {
 		if(handler == null) return;
 		this.bpm.setText(String.valueOf(handler.getBPM()));
 	}
 
-	private void read() {
+	public void read() {
 		if(handler == null) return;
 		String bpm = this.bpm.getText();
 		try {
