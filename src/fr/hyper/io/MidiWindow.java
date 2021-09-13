@@ -38,6 +38,8 @@ public class MidiWindow {
 	private JScrollPane scrollPane = null;
 	private JPanel controlPanel = new JPanel();
 
+	private ChannelsPanel channelsPanel = null;
+
 	private PlayConfig config;
 
 	private JButton stop, play;
@@ -66,6 +68,8 @@ public class MidiWindow {
 		notesPanel = new NotesPanel2(this);
 		scrollPane.add(notesPanel);
 		notesPanel.add(noFile);
+		
+		channelsPanel = new ChannelsPanel(this);
 
 		config = new PlayConfig();
 
@@ -88,6 +92,7 @@ public class MidiWindow {
 		frame.setMinimumSize(new Dimension(500, 500));
 		frame.setLayout(new BorderLayout());
 		frame.add(notesPanel, BorderLayout.CENTER);
+		frame.add(channelsPanel, BorderLayout.EAST);
 		frame.add(controlPanel, BorderLayout.SOUTH);
 
 		try {
@@ -128,6 +133,10 @@ public class MidiWindow {
 
 	public MidiHandler getMidiHandler() {
 		return handler;
+	}
+
+	public NotesPanel2 getMidiPanel() {
+		return this.notesPanel;
 	}
 
 	public JFrame getFrame() {
@@ -178,6 +187,8 @@ public class MidiWindow {
 						}
 						config.setHandler(handler);
 						handler.loadMidiData();
+						notesPanel.init();
+						channelsPanel.init();
 						advancement.setMinimum(0);
 						advancement.setMaximum((int) handler.getTickLength());
 					}

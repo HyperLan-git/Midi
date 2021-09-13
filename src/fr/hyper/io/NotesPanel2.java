@@ -24,6 +24,8 @@ public class NotesPanel2 extends JComponent {
 
 	private MidiWindow parent;
 
+	private boolean[] drawChannels = new boolean[0];
+
 	private double beatsShown = 10;
 	private int xPos = 0;
 	private int colWidth = 50;
@@ -34,6 +36,16 @@ public class NotesPanel2 extends JComponent {
 		this.setPreferredSize(new Dimension(colWidth*MIDI_NOTES+1, 360));
 		this.setSize(new Dimension(colWidth*MIDI_NOTES+1, 360));
 		this.setBounds(0, 0, colWidth*MIDI_NOTES+1, 360);
+	}
+	
+	public void init() {
+		MidiHandler midi = parent.getMidiHandler();
+		MidiData data = midi.getMidiData();
+		if(!midi.isOpen() || data == null) return;
+		drawChannels = new boolean[midi.getTracks().length];
+		for(int i = 0; i < drawChannels.length; i++) {
+			drawChannels[i] = true;
+		}
 	}
 
 	@Override
@@ -68,7 +80,7 @@ public class NotesPanel2 extends JComponent {
 			g2.drawLine(0, y, w, y);
 		}
 
-		for(int i = 0; i < tracks.size(); i++) {
+		for(int i = 0; i < tracks.size(); i++) if(drawChannels[i]) {
 			Color c = Color.getHSBColor((float) (i)/tracks.size(), 1, 1);
 			List<MidiNote> track = tracks.get(i);
 			for(int j = 0; j < track.size(); j++) {
@@ -105,13 +117,13 @@ public class NotesPanel2 extends JComponent {
 	}
 
 	public static final int getHeightPos(long position, long screenStart, long screenEnd, int height) {
-		return height - (int)Math.round(((double) (position-screenStart))/(screenEnd-screenStart)*height);
+		return height - (int)Math.floor(((double) (position-screenStart))/(screenEnd-screenStart)*height);
 	}
 
 	public void zoom(double amount) {
 		this.beatsShown *= 1+amount/10.0;
 	}
-	
+
 	public void zoomHorizontally(double amount) {
 		int temp = colWidth;
 		this.colWidth *= 1+amount/10.0;
@@ -121,9 +133,14 @@ public class NotesPanel2 extends JComponent {
 	public void move(double amount) {
 		xPos += amount*25;
 	}
+	
+	public void setDraw(int channel, boolean draw) {
+		if(channel < 0 || channel >= drawChannels.length) return;
+		drawChannels[channel] = draw;
+	}
 
-	@Override
-	public int getWidth() {
-		return super.getWidth();
+	public boolean draws(int channel) {
+		if(channel < 0 || channel >= drawChannels.length) return false;
+		return drawChannels[channel];
 	}
 }
